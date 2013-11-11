@@ -15,10 +15,7 @@ public:
 	vector<GLfloat> getVertices();
 	vector<GLuint> getElementArray();
 private:
-	static vector<Point> icoPoints;
-	static vector<Triangle> icoTriangles;
-	static map<int64_t, int> middlePointCache;
-	static bool randSeeded;
+	map<int64_t, int> middlePointCache;
 	vector<Point> asteroidPoints;
 	vector<Triangle> asteroidTriangles;
 	vector<GLfloat> asteroidGLVertices;

@@ -17,13 +17,9 @@ public:
 	Point();
 	~Point(void);
 
-	bool moveInRandomDirection(GLfloat maxDistanceToMove, bool seeded){
+	bool moveInRandomDirection(GLfloat maxDistanceToMove){
 		GLfloat maxDimensionDistance = pow(maxDistanceToMove, 2)/3.0;
-		if(!seeded){
-			time_t timevar;
-			time(&timevar);
-			srand(timevar);
-		}
+		
 		GLfloat xToMove = -maxDimensionDistance + (float)rand()/((float)RAND_MAX/(maxDimensionDistance-(-maxDimensionDistance)));
 		GLfloat yToMove = -maxDimensionDistance + (float)rand()/((float)RAND_MAX/(maxDimensionDistance-(-maxDimensionDistance)));
 		GLfloat zToMove = -maxDimensionDistance + (float)rand()/((float)RAND_MAX/(maxDimensionDistance-(-maxDimensionDistance)));

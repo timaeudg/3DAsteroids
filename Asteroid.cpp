@@ -1,11 +1,6 @@
 #include "Asteroid.h"
 #define REFINEMENT_LEVEL 2
 
-vector<Point> Asteroid::icoPoints = vector<Point>();
-vector<Triangle> Asteroid::icoTriangles = vector<Triangle>();
-map<int64_t, int> Asteroid::middlePointCache = map<int64_t, int>();
-bool Asteroid::randSeeded = false;
-
 
 Asteroid::Asteroid(void)
 {
@@ -30,24 +25,20 @@ vector<GLuint> Asteroid::getElementArray(){
 }
 
 void Asteroid::generateAsteroidBase(){
-	if(this->icoPoints.size() == 0){
+	if(this->asteroidPoints.size() == 0){
 		//We haven't made the base of the asteroid, so we need to
 		createIcosahedronPoints();
 		createIcosahedronTriangles();
-		printf("Number of Points Before: %d\n", Asteroid::icoPoints.size());
 		//Now we have the icosahedron, we should make it a bit better though
 		
 		for(int i = 0; i < REFINEMENT_LEVEL; i++){
-			deformAsteroid(&Asteroid::icoPoints);
+			deformAsteroid(&this->asteroidPoints);
 			refineIcoSphere();
 		}
-		printf("Number of Points after: %d\n", Asteroid::icoPoints.size());
 	}
 }
 
 void Asteroid::deformAndTransformBase(){
-	copyBaseInformation();
-	//deformAsteroid(&this->asteroidPoints);
 	transformToGL();
 
 	vector<GLuint> elements = vector<GLuint>();
@@ -82,19 +73,12 @@ void Asteroid::transformToGL(){
 	}
 }
 
-void Asteroid::copyBaseInformation(){
-	for(int i = 0; i < Asteroid::icoPoints.size(); i++){
-		this->asteroidPoints.push_back(Point(Asteroid::icoPoints[i].coords.r, Asteroid::icoPoints[i].coords.g, Asteroid::icoPoints[i].coords.b));
-	}
-
-	for(int i = 0; i < Asteroid::icoTriangles.size(); i++){
-		this->asteroidTriangles.push_back(Triangle(Asteroid::icoTriangles[i].p1Index, Asteroid::icoTriangles[i].p2Index, Asteroid::icoTriangles[i].p3Index));
-	}
-}
-
 void Asteroid::deformAsteroid(vector<Point>* points){
+	unsigned int time_ui = unsigned int( time(NULL) );
+	srand( time_ui );
+	//srand(time(NULL));
 	for(int i = 0; i < points->size(); i++){
-		randSeeded = points->data()[i].moveInRandomDirection(1.0f, randSeeded);
+		points->data()[i].moveInRandomDirection(1.0f);
 	}
 }
 
@@ -107,46 +91,46 @@ void Asteroid::createIcosahedronPoints(){
 	t = reductionFactor * t;
 	baseSize = baseSize * reductionFactor;
 	
-	Asteroid::icoPoints.push_back(Point(-baseSize,  t, 0));
-	Asteroid::icoPoints.push_back(Point( baseSize,  t, 0));
-	Asteroid::icoPoints.push_back(Point(-baseSize, -t, 0));
-	Asteroid::icoPoints.push_back(Point( baseSize, -t, 0));
+	this->asteroidPoints.push_back(Point(-baseSize,  t, 0));
+	this->asteroidPoints.push_back(Point( baseSize,  t, 0));
+	this->asteroidPoints.push_back(Point(-baseSize, -t, 0));
+	this->asteroidPoints.push_back(Point( baseSize, -t, 0));
 	
-	Asteroid::icoPoints.push_back(Point( 0, -baseSize,  t));
-	Asteroid::icoPoints.push_back(Point( 0,  baseSize,  t));
-	Asteroid::icoPoints.push_back(Point( 0, -baseSize, -t));
-	Asteroid::icoPoints.push_back(Point( 0,  baseSize, -t));
-	
-	Asteroid::icoPoints.push_back(Point( t,  0, -baseSize));
-	Asteroid::icoPoints.push_back(Point( t,  0,  baseSize));
-	Asteroid::icoPoints.push_back(Point(-t,  0, -baseSize));
-	Asteroid::icoPoints.push_back(Point(-t,  0,  baseSize));
+	this->asteroidPoints.push_back(Point( 0, -baseSize,  t));
+	this->asteroidPoints.push_back(Point( 0,  baseSize,  t));
+	this->asteroidPoints.push_back(Point( 0, -baseSize, -t));
+	this->asteroidPoints.push_back(Point( 0,  baseSize, -t));
+
+	this->asteroidPoints.push_back(Point( t,  0, -baseSize));
+	this->asteroidPoints.push_back(Point( t,  0,  baseSize));
+	this->asteroidPoints.push_back(Point(-t,  0, -baseSize));
+	this->asteroidPoints.push_back(Point(-t,  0,  baseSize));
 }
 
 void Asteroid::createIcosahedronTriangles(){
-	Asteroid::icoTriangles.push_back(Triangle( 0, 11,  5));
-	Asteroid::icoTriangles.push_back(Triangle( 0,  5,  1));
-	Asteroid::icoTriangles.push_back(Triangle( 0,  1,  7));
-	Asteroid::icoTriangles.push_back(Triangle( 0,  7, 10));
-	Asteroid::icoTriangles.push_back(Triangle( 0, 10, 11));
-									 
-	Asteroid::icoTriangles.push_back(Triangle( 1,  5,  9));
-	Asteroid::icoTriangles.push_back(Triangle( 5, 11,  4));
-	Asteroid::icoTriangles.push_back(Triangle(11, 10,  2));
-	Asteroid::icoTriangles.push_back(Triangle(10,  7,  6));
-	Asteroid::icoTriangles.push_back(Triangle( 7,  1,  8));
-									 
-	Asteroid::icoTriangles.push_back(Triangle( 3,  9,  4));
-	Asteroid::icoTriangles.push_back(Triangle( 3,  4,  2));
-	Asteroid::icoTriangles.push_back(Triangle( 3,  2,  6));
-	Asteroid::icoTriangles.push_back(Triangle( 3,  6,  8));
-	Asteroid::icoTriangles.push_back(Triangle( 3,  8,  9));
-									 
-	Asteroid::icoTriangles.push_back(Triangle( 4,  9,  5));
-	Asteroid::icoTriangles.push_back(Triangle( 2,  4, 11));
-	Asteroid::icoTriangles.push_back(Triangle( 6,  2, 10));
-	Asteroid::icoTriangles.push_back(Triangle( 8,  6,  7));
-	Asteroid::icoTriangles.push_back(Triangle( 9,  8,  1));
+	this->asteroidTriangles.push_back(Triangle( 0, 11,  5));
+	this->asteroidTriangles.push_back(Triangle( 0,  5,  1));
+	this->asteroidTriangles.push_back(Triangle( 0,  1,  7));
+	this->asteroidTriangles.push_back(Triangle( 0,  7, 10));
+	this->asteroidTriangles.push_back(Triangle( 0, 10, 11));
+
+	this->asteroidTriangles.push_back(Triangle( 1,  5,  9));
+	this->asteroidTriangles.push_back(Triangle( 5, 11,  4));
+	this->asteroidTriangles.push_back(Triangle(11, 10,  2));
+	this->asteroidTriangles.push_back(Triangle(10,  7,  6));
+	this->asteroidTriangles.push_back(Triangle( 7,  1,  8));
+	
+	this->asteroidTriangles.push_back(Triangle( 3,  9,  4));
+	this->asteroidTriangles.push_back(Triangle( 3,  4,  2));
+	this->asteroidTriangles.push_back(Triangle( 3,  2,  6));
+	this->asteroidTriangles.push_back(Triangle( 3,  6,  8));
+	this->asteroidTriangles.push_back(Triangle( 3,  8,  9));
+	
+	this->asteroidTriangles.push_back(Triangle( 4,  9,  5));
+	this->asteroidTriangles.push_back(Triangle( 2,  4, 11));
+	this->asteroidTriangles.push_back(Triangle( 6,  2, 10));
+	this->asteroidTriangles.push_back(Triangle( 8,  6,  7));
+	this->asteroidTriangles.push_back(Triangle( 9,  8,  1));
 }
 
 int Asteroid::calculateMiddlePoint(int p1, int p2, vector<Point>* points){
@@ -192,19 +176,17 @@ int Asteroid::affixVertex(Point middlePoint, Point derpPoint, vector<Point>* poi
 void Asteroid::refineIcoSphere(){
 	vector<Triangle> refined = vector<Triangle>();
 
-	for(int i = 0; i < Asteroid::icoTriangles.size(); i++){
-		Triangle tri = Asteroid::icoTriangles[i];
+	for(int i = 0; i < this->asteroidTriangles.size(); i++){
+		Triangle tri = this->asteroidTriangles[i];
 		
-		int a = calculateMiddlePoint(tri.p1Index, tri.p2Index, &Asteroid::icoPoints);
-		int b = calculateMiddlePoint(tri.p2Index, tri.p3Index, &Asteroid::icoPoints);
-		int c = calculateMiddlePoint(tri.p3Index, tri.p1Index, &Asteroid::icoPoints);
+		int a = calculateMiddlePoint(tri.p1Index, tri.p2Index, &this->asteroidPoints);
+		int b = calculateMiddlePoint(tri.p2Index, tri.p3Index, &this->asteroidPoints);
+		int c = calculateMiddlePoint(tri.p3Index, tri.p1Index, &this->asteroidPoints);
 
 		refined.push_back(Triangle(tri.p1Index, a, c));
 		refined.push_back(Triangle(tri.p2Index, b, a));
 		refined.push_back(Triangle(tri.p3Index, c, b));
 		refined.push_back(Triangle(a, b, c));
 	}
-	printf("Refined Size: %d\n", refined.size());
-	printf("Ico Size: %d\n", Asteroid::icoTriangles.size());
-	Asteroid::icoTriangles = refined;
+	this->asteroidTriangles = refined;
 }
