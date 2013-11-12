@@ -1,5 +1,6 @@
 #include "Asteroid.h"
 #define REFINEMENT_LEVEL 2
+#define BASE_RADIUS 1.9021f
 
 
 Asteroid::Asteroid(void)
@@ -24,6 +25,10 @@ vector<GLuint> Asteroid::getElementArray(){
 	return elements;
 }
 
+vector<GLfloat> Asteroid::getColors(){
+	return colors;
+}
+
 void Asteroid::generateAsteroidBase(){
 	if(this->asteroidPoints.size() == 0){
 		//We haven't made the base of the asteroid, so we need to
@@ -46,6 +51,12 @@ void Asteroid::deformAndTransformBase(){
 		elements.push_back(i);
 	}
 	this->elements = elements;
+		
+	for(int i = 0; i < this->asteroidGLVertices.size(); i++){
+		this->colors.push_back(1.0f);
+		this->colors.push_back(1.0f);
+		this->colors.push_back(1.0f);
+	}
 }
 
 void Asteroid::transformToGL(){

@@ -14,6 +14,7 @@ public:
 	vector<GLfloat> getNormals();
 	vector<GLfloat> getVertices();
 	vector<GLuint> getElementArray();
+	vector<GLfloat> getColors();
 private:
 	map<int64_t, int> middlePointCache;
 	vector<Point> asteroidPoints;
@@ -21,6 +22,11 @@ private:
 	vector<GLfloat> asteroidGLVertices;
 	vector<GLfloat> asteroidGLNormals;
 	vector<GLuint> elements;
+	vector<GLfloat> colors;
+	glm::vec3 position;
+	glm::mat4 rotation;
+	glm::mat4 translation;
+	GLfloat radius;
 	void generateAsteroidBase();
 	void createIcosahedronPoints();
 	void createIcosahedronTriangles();
