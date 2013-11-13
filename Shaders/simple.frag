@@ -18,7 +18,7 @@ void main()
 	//gl_FragColor = smoothColor;
 	
 	if(picking){
-		gl_FragColor = vec4(ID/100.0, ID/100.0, ID/100.0, 1.0);
+		gl_FragColor = vec4(ID/255.0, ID/255.0, ID/255.0, 1.0);
 	} else {
 		gl_FragColor = aColor + dColor + sColor;
 	}

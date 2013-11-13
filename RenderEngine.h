@@ -32,14 +32,14 @@ public:
 			// Clean up the buffers
 			glDeleteBuffers(1, &positionBuffer);
 			glDeleteBuffers(1, &elementBuffer);
+			glDeleteBuffers(1, &colorBuffer);
+			glDeleteBuffers(1, &normBuffer);
 			glDeleteVertexArrays(1, &vertexArray);
 		}
 	}
 
-	void init(unsigned int const & w, unsigned int const & h)
+	void init()
 	{
-		this->w = w;
-		this->h = h;
 		clock.Reset();
 		setupGlew();
 		setupShader();
@@ -47,7 +47,7 @@ public:
 		initialized = true;
 	}
 
-	void display(vec3 camera = vec3(1,3,5), vec3 target = vec3(3,3,0), bool pickingEnabled = false)
+	void display(vec3 camera = vec3(1,3,5), vec3 target = vec3(3,3,0), vec3 up = vec3(0,0,1), bool pickingEnabled = false)
 	{
 		glEnable(GL_DEPTH_TEST);
 		//clear the old frame
@@ -61,7 +61,7 @@ public:
 		glBindVertexArray(vertexArray);
 
 		mat4 C = mat4(1);
-		C = glm::lookAt(camera, target, vec3(0,0.001,1));
+		C = glm::lookAt(camera, target,up);
 		P = perspective(90.f, 1.f, 0.1f, 200.f);
 
 		glUniformMatrix4fv(cameraSlot, 1, GL_FALSE, &C[0][0]);
@@ -88,7 +88,7 @@ public:
 		for(map<float, int>::iterator iterator = activeAsteroids.begin(); iterator != activeAsteroids.end(); iterator++){
 			float asteroidID = iterator->first;
 			int asteroidIndex = iterator->second;
-			if(asteroids[asteroidID].isAlive()){
+			if(asteroids[asteroidIndex].isAlive()){
 				int asteroidSize = asteroids[asteroidIndex].getElementArray().size();
 				int drawOffset = arena.triangles.size() + asteroidIndex * asteroidSize;
 
@@ -114,9 +114,7 @@ public:
 	}
 
 	void splitNextAsteroid(float id){
-		float timeSinceLastPres = clock.GetElapsedTime();
-
-		if(asteroids[activeAsteroids[id]].isAlive() && timeSinceLastPres > 1.0){
+		if(asteroids[activeAsteroids[id]].isAlive()){
 			asteroids[activeAsteroids[id]].kill();
 			GLfloat killedSize = asteroids[activeAsteroids[id]].getRadius();
 
@@ -147,11 +145,9 @@ public:
 				asteroids.data()[indexOfFirstChild].setStartingPoint(asteroids[activeAsteroids[id]].getPosition());
 				asteroids.data()[indexOfSecondChild].setStartingPoint(asteroids[activeAsteroids[id]].getPosition());
 			}
-
+			
 			map<float, int>::iterator iter = activeAsteroids.find(id);
 			activeAsteroids.erase(iter);
-
-			clock.Reset();
 			return;
 		}
 	}

@@ -26,11 +26,13 @@ public:
 	{
 		App = new sf::Window(sf::VideoMode(RESOLUTION, RESOLUTION, 32), "program5");
 		const sf::Input& input = App->GetInput();
-		render.init(w, h);
+		render.init();
 		step = 2;
+		firing = 0;
 		outside = false;
 		glm::vec3 camera = glm::vec3(0,0,0.5);
 		glm::vec3 target = glm::normalize(glm::vec3(1,0,0))+camera;
+		glm::vec3 up = glm::vec3(0,0,1);
 		while (App->IsOpened())
 		{			
 			App->SetActive();
@@ -40,40 +42,62 @@ public:
 			if(sleepTime > 0)
 				sf::Sleep(sleepTime);
 			//Handle Camera Movement
-			float delta = 3;
-			if(input.IsKeyDown(sf::Key::Left)) {
-				target = target - camera;
-				glm::vec4 rot = glm::rotate(glm::mat4(1), delta, vec3(0,0,1))*(vec4(target,1)); 
-				target = glm::normalize(vec3(rot[0], rot[1], rot[2]))+camera;
-			}
-			if(input.IsKeyDown(sf::Key::Right)) {
-				target = target - camera;
-				glm::vec4 rot = glm::rotate(glm::mat4(1), -delta, vec3(0,0,1))*(vec4(target,1)); 
-				target = glm::normalize(vec3(rot[0], rot[1], rot[2]))+camera;
-			}
-			delta = 0.1;
-			if(input.IsKeyDown(sf::Key::Up)) {
-				vec3 oldCamera = camera;
-				vec3 oldTarget = target;
+			float delta = 0.1;
+			if(input.IsKeyDown(sf::Key::A)) {
 				camera = camera+delta*(target - camera);
 				target = glm::normalize(target - camera)+camera;
 			}
-			if(input.IsKeyDown(sf::Key::Down)) {
+			if(input.IsKeyDown(sf::Key::Z)) {
 				camera = camera-delta*(target - camera);
 				target = glm::normalize(target - camera)+camera;
 			}
+			delta = 3;
+			if(input.IsKeyDown(sf::Key::Left)) {
+				target = target - camera;
+				target = normalize(vec3(rotate(mat4(1), delta, up)*vec4(target.x, target.y, target.z, 1)));
+				target += camera;
+			}
+			if(input.IsKeyDown(sf::Key::Right)) {
+				target = target - camera;
+				target = normalize(vec3(rotate(mat4(1), -delta, up)*vec4(target.x, target.y, target.z, 1)));
+				target += camera;
+			}
+			if(input.IsKeyDown(sf::Key::Up)) {
+				target = target - camera;
+				mat4 rot = rotate(mat4(1), delta, cross(up, target));
+				target = normalize(vec3(rot*vec4(target.x, target.y, target.z, 1)));
+				up = normalize(vec3(rot*vec4(up.x,up.y,up.z,1)));
+				target += camera;
+			}
+			if(input.IsKeyDown(sf::Key::Down)) {
+				target = target - camera;
+				mat4 rot = rotate(mat4(1), -delta, cross(up, target));
+				target = normalize(vec3(rot*vec4(target.x, target.y, target.z, 1)));
+				up = normalize(vec3(rot*vec4(up.x,up.y,up.z,1)));
+				target += camera;
+			}
+			if(camera.x > 9) camera.x = 9;
+			if(camera.x < -9) camera.x = -9;
+			if(camera.y > 9) camera.y = 9;
+			if(camera.y < -9) camera.y = -9;
+			if(camera.z > 9) camera.z = 9;
+			if(camera.z < -9) camera.z = -9;
 
-			if(input.IsKeyDown(sf::Key::Space)) {
+			if(firing) {
+				firing--;
 				//TODO: We need to make it use the id that was picked here
-				render.display(camera, target, true);
-				float pickedColor[4];
-				glReadPixels(RESOLUTION/2, RESOLUTION/2, 1, 1, GL_RGBA, GL_FLOAT, pickedColor);
-				printf("Picked ID: %f\n", pickedColor[0]*100);
-				//render.splitNextAsteroid(pickedColor[0]*256);
-			} 
+					render.display(camera, target, up, true);
+					if(firing == 5) {
+					float pickedColor[4];
+						glReadPixels(RESOLUTION/2, RESOLUTION/2, 1, 1, GL_RGBA, GL_FLOAT, pickedColor);
+						float roundedID = floor(pickedColor[0]*255 + .5);
+						printf("Picked ID: %f\n", roundedID);
+						render.splitNextAsteroid(roundedID);
+					}
+			}
 
-			render.display(camera, target, false);
 			
+			if(!firing) render.display(camera, target, up, false);
 			App->Display();
 			handleEvents();
 		}
@@ -88,6 +112,7 @@ private:
 	RenderEngine render;
 	unsigned int step;
 	bool outside;
+	int firing;
 
 	void handleEvents()
 	{
@@ -102,24 +127,16 @@ private:
 				App->Close();
 			
 			// This is for grading your code. DO NOT REMOVE
-			if(Event.Type == sf::Event::KeyPressed )
-			{
-				if(Event.Key.Code == sf::Key::Equal) {
-					unsigned char *dest;
-					unsigned int w = App->GetWidth();
-					unsigned int h = App->GetHeight();
-					glPixelStorei(GL_PACK_ALIGNMENT, 1);
-					dest = (unsigned char *) malloc( sizeof(unsigned char)*w*h*3);
-					glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, dest);
-				
-					FILE *file;
-					file = fopen("_program1.ppm", "wb");
-					fprintf(file, "P6\n%i %i\n%i\n", w, h, 255);
-					for(int i=h-1; i>=0; i--)
-						fwrite(&dest[i*w*3], sizeof(unsigned char), w*3, file);
-					fclose(file);
-					free(dest);
-				}
+			if(Event.Type == sf::Event::KeyPressed && Event.Key.Code == sf::Key::Space) {
+				firing = 6;
+			} 
+			if(Event.Type == sf::Event::KeyReleased && Event.Key.Code == sf::Key::Space) {
+				firing = 0;
+			}
+
+			if(Event.Type == sf::Event::KeyPressed && Event.Key.Code == sf::Key::F12){
+				render = RenderEngine();
+				render.init();
 			}
 
 			
