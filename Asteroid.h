@@ -9,12 +9,17 @@ using namespace std;
 class Asteroid
 {
 public:
-	Asteroid(void);
+	Asteroid();
+	Asteroid(glm::vec3 startingPosition, int elementOffset, int radius);
 	~Asteroid(void);
+
+	glm::mat4 getTransformMatrix(float bounds);
+	glm::vec3 getPosition();
 	vector<GLfloat> getNormals();
 	vector<GLfloat> getVertices();
 	vector<GLuint> getElementArray();
 	vector<GLfloat> getColors();
+
 private:
 	map<int64_t, int> middlePointCache;
 	vector<Point> asteroidPoints;
@@ -23,10 +28,19 @@ private:
 	vector<GLfloat> asteroidGLNormals;
 	vector<GLuint> elements;
 	vector<GLfloat> colors;
+
+	int elementOffset;
+
 	glm::vec3 position;
 	glm::mat4 rotation;
 	glm::mat4 translation;
+
+	glm::vec3 velocityVector;
+	glm::vec3 rotationRates;
+
 	GLfloat radius;
+	GLfloat deformedResultantRadius;
+
 	void generateAsteroidBase();
 	void createIcosahedronPoints();
 	void createIcosahedronTriangles();
@@ -37,6 +51,7 @@ private:
 	int calculateMiddlePoint(int p1, int p2, vector<Point>* points);
 	void refineIcoSphere();
 	int affixVertex(Point point, Point derpPoint, vector<Point>* pointsVector);
+	void calculateDeformedResultantRadius();
 };
 
 

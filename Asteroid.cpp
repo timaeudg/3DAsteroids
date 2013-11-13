@@ -1,12 +1,35 @@
 #include "Asteroid.h"
 #define REFINEMENT_LEVEL 2
 #define BASE_RADIUS 1.9021f
+#define MAX_VELOCITY 0.03
+#define MAX_ROTATION 5.0
 
+Asteroid::Asteroid(){
+	Asteroid(glm::vec3(0), 0, 1.9021);
+}
 
-Asteroid::Asteroid(void)
+Asteroid::Asteroid(glm::vec3 startingPosition, int elementOffset, int radius)
 {
+	this->radius = radius;
+	this->position = startingPosition;
+	this->elementOffset = elementOffset;
 	generateAsteroidBase();
 	deformAndTransformBase();
+	calculateDeformedResultantRadius();
+
+	glm::vec3 translateVector = this->position;
+	this->translation = glm::translate(glm::mat4(1), translateVector);
+
+	GLfloat xPos = -MAX_VELOCITY + (float)rand()/((float)RAND_MAX/(MAX_VELOCITY-(-MAX_VELOCITY)));
+	GLfloat yPos = -MAX_VELOCITY + (float)rand()/((float)RAND_MAX/(MAX_VELOCITY-(-MAX_VELOCITY)));
+	GLfloat zPos = -MAX_VELOCITY + (float)rand()/((float)RAND_MAX/(MAX_VELOCITY-(-MAX_VELOCITY)));
+	velocityVector = glm::vec3(xPos, yPos, zPos);
+
+	GLfloat xRot = -MAX_ROTATION + (float)rand()/((float)RAND_MAX/(MAX_ROTATION-(-MAX_ROTATION)));
+	GLfloat yRot = -MAX_ROTATION + (float)rand()/((float)RAND_MAX/(MAX_ROTATION-(-MAX_ROTATION)));
+	GLfloat zRot = -MAX_ROTATION + (float)rand()/((float)RAND_MAX/(MAX_ROTATION-(-MAX_ROTATION)));
+	this->rotationRates = glm::vec3(xRot, yRot, zRot);
+	this->rotation = glm::mat4(1);
 }
 
 Asteroid::~Asteroid(void)
@@ -29,6 +52,39 @@ vector<GLfloat> Asteroid::getColors(){
 	return colors;
 }
 
+glm::vec3 Asteroid::getPosition(){
+	return this->position;
+}
+
+glm::mat4 Asteroid::getTransformMatrix(float bounds){
+	this->position += velocityVector;
+	glm::mat4 T = glm::translate(this->translation, velocityVector);
+	this->translation = T;
+	if(this->position.x + radius >= bounds || this->position.x - radius <= -bounds){
+		velocityVector = glm::vec3(-velocityVector.x, velocityVector.y, velocityVector.z);
+		rotationRates = glm::vec3(rotationRates.x, -rotationRates.y, -rotationRates.z);
+	}
+
+	if(this->position.y + radius >= bounds || this->position.y - radius <= -bounds){
+		velocityVector = glm::vec3(velocityVector.x, -velocityVector.y, velocityVector.z);
+		rotationRates = glm::vec3(-rotationRates.x, rotationRates.y, -rotationRates.z);
+	}
+
+	if(this->position.z + radius>= bounds || this->position.z - radius<= -bounds){
+		velocityVector = glm::vec3(velocityVector.x, velocityVector.y, -velocityVector.z);
+		rotationRates = glm::vec3(-rotationRates.x, -rotationRates.y, rotationRates.z);
+	}
+
+	glm::mat4 R = glm::rotate(this->rotation, rotationRates.x, glm::vec3(1,0,0));
+	R = glm::rotate(R, rotationRates.y, glm::vec3(0,1,0));
+	R = glm::rotate(R, rotationRates.z, glm::vec3(0,0,1));
+	this->rotation = R;
+
+	glm::mat4 S = glm::scale(glm::mat4(1), glm::vec3(radius / deformedResultantRadius, radius / deformedResultantRadius, radius / deformedResultantRadius));
+
+	return T*R*S;
+}
+
 void Asteroid::generateAsteroidBase(){
 	if(this->asteroidPoints.size() == 0){
 		//We haven't made the base of the asteroid, so we need to
@@ -47,8 +103,9 @@ void Asteroid::deformAndTransformBase(){
 	transformToGL();
 
 	vector<GLuint> elements = vector<GLuint>();
+
 	for(int i = 0; i < this->asteroidTriangles.size()*3; i++){
-		elements.push_back(i);
+		elements.push_back(i+this->elementOffset);
 	}
 	this->elements = elements;
 		
@@ -85,8 +142,6 @@ void Asteroid::transformToGL(){
 }
 
 void Asteroid::deformAsteroid(vector<Point>* points){
-	unsigned int time_ui = unsigned int( time(NULL) );
-	srand( time_ui );
 	//srand(time(NULL));
 	for(int i = 0; i < points->size(); i++){
 		points->data()[i].moveInRandomDirection(1.0f);
@@ -200,4 +255,18 @@ void Asteroid::refineIcoSphere(){
 		refined.push_back(Triangle(a, b, c));
 	}
 	this->asteroidTriangles = refined;
+}
+
+void Asteroid::calculateDeformedResultantRadius(){
+	GLfloat maxRadius = BASE_RADIUS;
+	for(int i = 0; i < this->asteroidPoints.size(); i++){
+		Point p = this->asteroidPoints.data()[i];
+		
+		GLfloat currentRadius = sqrt(p.coords.r*p.coords.r + p.coords.g*p.coords.g + p.coords.b*p.coords.g);
+		if(currentRadius > maxRadius){
+			maxRadius = currentRadius;
+		}
+	}
+	printf("Actual Radius: %f\n", maxRadius);
+	this->deformedResultantRadius = maxRadius;
 }
