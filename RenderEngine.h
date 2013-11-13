@@ -2,10 +2,12 @@
 #define __RENDERENGINE
 
 #define ARENA_SIZE 10.0
-#define NUMBER_OF_LARGE_ASTEROIDS 8
-#define LARGE_ASTEROID_RADIUS 2.0
-#define MEDIUM_ASTEROID_RADIUS 1.0
-#define SMALL_ASTEROID_RADIUS 0.5
+#define NUMBER_OF_LARGE_ASTEROIDS 4
+#define NUMBER_OF_MEDIUM_ASTEROIDS_PER_LARGE 2
+#define NUMBER_OF_SMALL_ASTEROIDS_PER_MEDIUM 2
+#define LARGE_ASTEROID_RADIUS 3.0
+#define MEDIUM_ASTEROID_RADIUS 1.5
+#define SMALL_ASTEROID_RADIUS 0.75
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -108,6 +110,7 @@ private:
 	bool initialized;
 	Cube arena;
 	vector<Asteroid> asteroids;
+	vector<bool> asteroidEnabled;
 
 	vector<GLfloat> points;
 	vector<GLfloat> normals;
@@ -170,46 +173,28 @@ private:
 
 	void setupBuffers()
 	{
-		
 		arena = Cube();
 		points = vector<GLfloat>(arena.vertices);
 		normals = vector<GLfloat>(arena.normals);
 		colors = vector<GLfloat>(arena.colorFloats);
 		elements = vector<GLuint>(arena.triangles);
 
-		vector<GLfloat> asteroidPoints;
-		vector<GLfloat> asteroidNormals;
-		vector<GLfloat> asteroidColors;
-		vector<GLuint>  asteroidElements;
-
 		unsigned int time_ui = unsigned int( time(NULL) );
 		srand( time_ui );
-
-		int asteroidSize = 0;
-		//Make method for generating asteroids given size to make them, number to make, and vectors to put them in
-		for(int i = 0; i<NUMBER_OF_LARGE_ASTEROIDS; i++){
-			int startingPosMax = ARENA_SIZE - LARGE_ASTEROID_RADIUS;
-			GLfloat xPos = -startingPosMax + (float)rand()/((float)RAND_MAX/(startingPosMax-(-startingPosMax)));
-			GLfloat yPos = -startingPosMax + (float)rand()/((float)RAND_MAX/(startingPosMax-(-startingPosMax)));
-			GLfloat zPos = -startingPosMax + (float)rand()/((float)RAND_MAX/(startingPosMax-(-startingPosMax)));
-			
-			Asteroid asteroid = Asteroid(glm::vec3(xPos, yPos, zPos), (arena.vertices.size()/3) + asteroidSize*i, LARGE_ASTEROID_RADIUS);
-
-			asteroidSize = asteroid.getElementArray().size();
-
-			asteroidPoints =   vector<GLfloat>(asteroid.getVertices());
-			asteroidNormals =  vector<GLfloat>(asteroid.getNormals());
-			asteroidColors =   vector<GLfloat>(asteroid.getColors());
-			asteroidElements = vector<GLuint>(asteroid.getElementArray());
-			
-			points.insert(points.end(), asteroidPoints.begin(), asteroidPoints.end());
-			elements.insert(elements.end(), asteroidElements.begin(), asteroidElements.end());
-			normals.insert(normals.end(), asteroidNormals.begin(), asteroidNormals.end());
-			colors.insert(colors.end(), asteroidColors.begin(), asteroidColors.end());
-
-			asteroids.push_back(asteroid);
-		}
+		printf("Asteroid Radius Before: %f\n", LARGE_ASTEROID_RADIUS);
+		generateAsteroids(NUMBER_OF_LARGE_ASTEROIDS, LARGE_ASTEROID_RADIUS, &points, &normals, &colors, &elements);
+		generateAsteroids(NUMBER_OF_LARGE_ASTEROIDS*NUMBER_OF_MEDIUM_ASTEROIDS_PER_LARGE, MEDIUM_ASTEROID_RADIUS, &points, &normals, &colors, &elements);
+		generateAsteroids(NUMBER_OF_LARGE_ASTEROIDS*NUMBER_OF_MEDIUM_ASTEROIDS_PER_LARGE*NUMBER_OF_SMALL_ASTEROIDS_PER_MEDIUM, SMALL_ASTEROID_RADIUS, &points, &normals, &colors, &elements);
 		
+		for(int i = 0; i < asteroids.size(); i++){
+			Asteroid a = asteroids.data()[i];
+			if(a.getRadius() == LARGE_ASTEROID_RADIUS){
+				asteroidEnabled.push_back(TRUE);
+			} else {
+				asteroidEnabled.push_back(FALSE);
+			}
+		}
+
 		/*
 		for(int i = 0; i < asteroid.getVertices().size(); i++){
 			points.push_back(asteroid.getVertices()[i]);
@@ -261,6 +246,40 @@ private:
 		glBindVertexArray(0);
 		
 		checkGLError("setup");
+	}
+
+	void generateAsteroids(int numberOfAsteroids, GLfloat asteroidRadius, vector<GLfloat>* points, vector<GLfloat>* normals, vector<GLfloat>* colors, vector<GLuint>* elements){
+		vector<GLfloat> asteroidPoints;
+		vector<GLfloat> asteroidNormals;
+		vector<GLfloat> asteroidColors;
+		vector<GLuint>  asteroidElements;
+
+		int asteroidSize = asteroids.size();
+		//Make method for generating asteroids given size to make them, number to make, and vectors to put them in
+		for(int i = 0; i<numberOfAsteroids; i++){
+			int startingPosMax = ARENA_SIZE - asteroidRadius;
+			GLfloat xPos = -startingPosMax + (float)rand()/((float)RAND_MAX/(startingPosMax-(-startingPosMax)));
+			GLfloat yPos = -startingPosMax + (float)rand()/((float)RAND_MAX/(startingPosMax-(-startingPosMax)));
+			GLfloat zPos = -startingPosMax + (float)rand()/((float)RAND_MAX/(startingPosMax-(-startingPosMax)));
+			
+			GLfloat radius = asteroidRadius;
+			printf("Radius after %f\n", radius);
+			Asteroid asteroid = Asteroid(glm::vec3(xPos, yPos, zPos), (arena.vertices.size()/3) + asteroidSize*i, radius);
+
+			asteroidSize = asteroid.getElementArray().size();
+
+			asteroidPoints =   vector<GLfloat>(asteroid.getVertices());
+			asteroidNormals =  vector<GLfloat>(asteroid.getNormals());
+			asteroidColors =   vector<GLfloat>(asteroid.getColors());
+			asteroidElements = vector<GLuint>(asteroid.getElementArray());
+			
+			points->insert(points->end(), asteroidPoints.begin(), asteroidPoints.end());
+			elements->insert(elements->end(), asteroidElements.begin(), asteroidElements.end());
+			normals->insert(normals->end(), asteroidNormals.begin(), asteroidNormals.end());
+			colors->insert(colors->end(), asteroidColors.begin(), asteroidColors.end());
+
+			asteroids.push_back(asteroid);
+		}
 	}
 };
 

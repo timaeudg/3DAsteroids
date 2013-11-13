@@ -10,11 +10,12 @@ class Asteroid
 {
 public:
 	Asteroid();
-	Asteroid(glm::vec3 startingPosition, int elementOffset, int radius);
+	Asteroid(glm::vec3 startingPosition, int elementOffset, GLfloat radius);
 	~Asteroid(void);
 
 	glm::mat4 getTransformMatrix(float bounds);
 	glm::vec3 getPosition();
+	GLfloat getRadius();
 	vector<GLfloat> getNormals();
 	vector<GLfloat> getVertices();
 	vector<GLuint> getElementArray();

@@ -8,9 +8,10 @@ Asteroid::Asteroid(){
 	Asteroid(glm::vec3(0), 0, 1.9021);
 }
 
-Asteroid::Asteroid(glm::vec3 startingPosition, int elementOffset, int radius)
+Asteroid::Asteroid(glm::vec3 startingPosition, int elementOffset, GLfloat radius)
 {
 	this->radius = radius;
+	printf("Radius at creation: %f\n", radius);
 	this->position = startingPosition;
 	this->elementOffset = elementOffset;
 	generateAsteroidBase();
@@ -56,8 +57,13 @@ glm::vec3 Asteroid::getPosition(){
 	return this->position;
 }
 
+GLfloat Asteroid::getRadius(){
+	return this->radius;
+}
+
 glm::mat4 Asteroid::getTransformMatrix(float bounds){
 	this->position += velocityVector;
+
 	glm::mat4 T = glm::translate(this->translation, velocityVector);
 	this->translation = T;
 	if(this->position.x + radius >= bounds || this->position.x - radius <= -bounds){
@@ -267,6 +273,5 @@ void Asteroid::calculateDeformedResultantRadius(){
 			maxRadius = currentRadius;
 		}
 	}
-	printf("Actual Radius: %f\n", maxRadius);
 	this->deformedResultantRadius = maxRadius;
 }
