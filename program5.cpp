@@ -34,6 +34,7 @@ public:
 		while (App->IsOpened())
 		{			
 			App->SetActive();
+
 			float targetFrameTime = 1.0f/(float)TARGET_FPS;
 			float sleepTime = targetFrameTime - App->GetFrameTime();
 			if(sleepTime > 0)
@@ -62,7 +63,17 @@ public:
 				target = glm::normalize(target - camera)+camera;
 			}
 
-			render.display(camera, target, outside);
+			if(input.IsKeyDown(sf::Key::Space)) {
+				//TODO: We need to make it use the id that was picked here
+				render.display(camera, target, true);
+				float pickedColor[4];
+				glReadPixels(RESOLUTION/2, RESOLUTION/2, 1, 1, GL_RGBA, GL_FLOAT, pickedColor);
+				printf("Picked ID: %f\n", pickedColor[0]*100);
+				//render.splitNextAsteroid(pickedColor[0]*256);
+			} 
+
+			render.display(camera, target, false);
+			
 			App->Display();
 			handleEvents();
 		}

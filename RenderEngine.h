@@ -47,7 +47,7 @@ public:
 		initialized = true;
 	}
 
-	void display(vec3 camera = vec3(1,3,5), vec3 target = vec3(3,3,0), bool outside = true)
+	void display(vec3 camera = vec3(1,3,5), vec3 target = vec3(3,3,0), bool pickingEnabled = false)
 	{
 		glEnable(GL_DEPTH_TEST);
 		//clear the old frame
@@ -70,27 +70,36 @@ public:
 		glUniform1f(timeSlot, t);
 
 		glm::mat4 T = glm::mat4(1);
-		//T = glm::translate(T, glm::vec3(xPos,yPos,0));
-		/*
-		if(second - first > 1){
-			//Vertical Down
-			T = glm::rotate(T, 90.f, glm::vec3(0,0,1));
-		}
-		*/
 		T =  glm::scale(T, glm::vec3(ARENA_SIZE, ARENA_SIZE, ARENA_SIZE));
+
 		GLuint elementsSize = points.size();
-		//GLuint elementsSize = sizeof(Wall::elements) - 6;
+		
+		if(pickingEnabled){
+//			printf("Picking is enabled\n");
+			glUniform1i(pickingSlot, GL_TRUE);
+		} else {
+			glUniform1i(pickingSlot, GL_FALSE);
+		}
 		
 		glUniformMatrix4fv(matSlot, 1, GL_FALSE, &T[0][0]);
+		glUniform1f(idSlot, 0.0);
 		glDrawElements(GL_TRIANGLES, arena.triangles.size(), GL_UNSIGNED_INT, 0);
-		
-		for(int i = 0; i<asteroids.size(); i++){
-			int asteroidSize = asteroids[i].getElementArray().size();
-			int drawOffset = arena.triangles.size() + i * asteroidSize;
 
-			T = asteroids[i].getTransformMatrix(ARENA_SIZE);
-			glUniformMatrix4fv(matSlot, 1, GL_FALSE, &T[0][0]);
-			glDrawElements(GL_TRIANGLES, asteroidSize, GL_UNSIGNED_INT, (void*)(drawOffset*sizeof(GLuint)));
+		for(map<float, int>::iterator iterator = activeAsteroids.begin(); iterator != activeAsteroids.end(); iterator++){
+			float asteroidID = iterator->first;
+			int asteroidIndex = iterator->second;
+			if(asteroids[asteroidID].isAlive()){
+				int asteroidSize = asteroids[asteroidIndex].getElementArray().size();
+				int drawOffset = arena.triangles.size() + asteroidIndex * asteroidSize;
+
+				T = asteroids[asteroidIndex].getTransformMatrix(ARENA_SIZE, pickingEnabled);
+
+				//printf("Asteroid ID: %f\n", asteroidID/256.0);
+				glUniform1f(idSlot, asteroidID);
+
+				glUniformMatrix4fv(matSlot, 1, GL_FALSE, &T[0][0]);
+				glDrawElements(GL_TRIANGLES, asteroidSize, GL_UNSIGNED_INT, (void*)(drawOffset*sizeof(GLuint)));
+			}
 		}
 		
 		//cleanup
@@ -104,13 +113,58 @@ public:
 		glViewport(0, 0, newWidth, newHeight);
 	}
 
+	void splitNextAsteroid(float id){
+		float timeSinceLastPres = clock.GetElapsedTime();
+
+		if(asteroids[activeAsteroids[id]].isAlive() && timeSinceLastPres > 1.0){
+			asteroids[activeAsteroids[id]].kill();
+			GLfloat killedSize = asteroids[activeAsteroids[id]].getRadius();
+
+			int indexOfFirstChild;
+			int indexOfSecondChild;
+
+			if(killedSize == LARGE_ASTEROID_RADIUS && mediumAsteroidQueue.size() > 0){
+				indexOfFirstChild = mediumAsteroidQueue.front();
+				mediumAsteroidQueue.pop();
+				indexOfSecondChild = mediumAsteroidQueue.front();
+				mediumAsteroidQueue.pop();
+
+				activeAsteroids.insert(make_pair(asteroids.data()[indexOfFirstChild].getID(), indexOfFirstChild));
+				activeAsteroids.insert(make_pair(asteroids.data()[indexOfSecondChild].getID(), indexOfSecondChild));
+
+				asteroids.data()[indexOfFirstChild].setStartingPoint(asteroids[activeAsteroids[id]].getPosition());
+				asteroids.data()[indexOfSecondChild].setStartingPoint(asteroids[activeAsteroids[id]].getPosition());
+
+			} else if(killedSize == MEDIUM_ASTEROID_RADIUS && smallAsteroidQueue.size() > 0){
+				indexOfFirstChild = smallAsteroidQueue.front();
+				smallAsteroidQueue.pop();
+				indexOfSecondChild = smallAsteroidQueue.front();
+				smallAsteroidQueue.pop();
+
+				activeAsteroids.insert(make_pair(asteroids.data()[indexOfFirstChild].getID(), indexOfFirstChild));
+				activeAsteroids.insert(make_pair(asteroids.data()[indexOfSecondChild].getID(), indexOfSecondChild));
+
+				asteroids.data()[indexOfFirstChild].setStartingPoint(asteroids[activeAsteroids[id]].getPosition());
+				asteroids.data()[indexOfSecondChild].setStartingPoint(asteroids[activeAsteroids[id]].getPosition());
+			}
+
+			map<float, int>::iterator iter = activeAsteroids.find(id);
+			activeAsteroids.erase(iter);
+
+			clock.Reset();
+			return;
+		}
+	}
+
 
 private:
 	MazeModel model;
 	bool initialized;
 	Cube arena;
 	vector<Asteroid> asteroids;
-	vector<bool> asteroidEnabled;
+	map<float, int> activeAsteroids;
+	queue<int> mediumAsteroidQueue;
+	queue<int> smallAsteroidQueue;
 
 	vector<GLfloat> points;
 	vector<GLfloat> normals;
@@ -132,6 +186,8 @@ private:
 	GLint colorSlot;
 	GLint normSlot;
 	GLint timeSlot;
+	GLint pickingSlot;
+	GLint idSlot;
 
 	sf::Clock clock;
 	
@@ -167,6 +223,8 @@ private:
 		colorSlot = glGetAttribLocation(shaderProg, "color");
 		normSlot = glGetAttribLocation(shaderProg, "norm");
 		timeSlot = glGetUniformLocation(shaderProg, "time");
+		pickingSlot = glGetUniformLocation(shaderProg, "picking");
+		idSlot = glGetUniformLocation(shaderProg, "ID");
 
 		checkGLError("shader");
 	}
@@ -181,17 +239,19 @@ private:
 
 		unsigned int time_ui = unsigned int( time(NULL) );
 		srand( time_ui );
-		printf("Asteroid Radius Before: %f\n", LARGE_ASTEROID_RADIUS);
+		
 		generateAsteroids(NUMBER_OF_LARGE_ASTEROIDS, LARGE_ASTEROID_RADIUS, &points, &normals, &colors, &elements);
 		generateAsteroids(NUMBER_OF_LARGE_ASTEROIDS*NUMBER_OF_MEDIUM_ASTEROIDS_PER_LARGE, MEDIUM_ASTEROID_RADIUS, &points, &normals, &colors, &elements);
 		generateAsteroids(NUMBER_OF_LARGE_ASTEROIDS*NUMBER_OF_MEDIUM_ASTEROIDS_PER_LARGE*NUMBER_OF_SMALL_ASTEROIDS_PER_MEDIUM, SMALL_ASTEROID_RADIUS, &points, &normals, &colors, &elements);
 		
 		for(int i = 0; i < asteroids.size(); i++){
-			Asteroid a = asteroids.data()[i];
+			Asteroid a = asteroids[i];
 			if(a.getRadius() == LARGE_ASTEROID_RADIUS){
-				asteroidEnabled.push_back(TRUE);
-			} else {
-				asteroidEnabled.push_back(FALSE);
+				activeAsteroids.insert(make_pair(a.getID(), i));
+			} else if(a.getRadius() == MEDIUM_ASTEROID_RADIUS){
+				mediumAsteroidQueue.push(i);
+			} else if (a.getRadius() == SMALL_ASTEROID_RADIUS){
+				smallAsteroidQueue.push(i);
 			}
 		}
 
@@ -263,7 +323,7 @@ private:
 			GLfloat zPos = -startingPosMax + (float)rand()/((float)RAND_MAX/(startingPosMax-(-startingPosMax)));
 			
 			GLfloat radius = asteroidRadius;
-			printf("Radius after %f\n", radius);
+			
 			Asteroid asteroid = Asteroid(glm::vec3(xPos, yPos, zPos), (arena.vertices.size()/3) + asteroidSize*i, radius);
 
 			asteroidSize = asteroid.getElementArray().size();

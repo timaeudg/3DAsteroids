@@ -1,8 +1,10 @@
 #include "Asteroid.h"
 #define REFINEMENT_LEVEL 2
 #define BASE_RADIUS 1.9021f
-#define MAX_VELOCITY 0.03
+#define MAX_VELOCITY 0.05
 #define MAX_ROTATION 5.0
+
+float Asteroid::nextID = 1.0;
 
 Asteroid::Asteroid(){
 	Asteroid(glm::vec3(0), 0, 1.9021);
@@ -11,15 +13,15 @@ Asteroid::Asteroid(){
 Asteroid::Asteroid(glm::vec3 startingPosition, int elementOffset, GLfloat radius)
 {
 	this->radius = radius;
-	printf("Radius at creation: %f\n", radius);
-	this->position = startingPosition;
+	setStartingPoint(startingPosition);
 	this->elementOffset = elementOffset;
+	alive = true;
+	asteroidID = nextID;
+	nextID += 1.0;
+
 	generateAsteroidBase();
 	deformAndTransformBase();
 	calculateDeformedResultantRadius();
-
-	glm::vec3 translateVector = this->position;
-	this->translation = glm::translate(glm::mat4(1), translateVector);
 
 	GLfloat xPos = -MAX_VELOCITY + (float)rand()/((float)RAND_MAX/(MAX_VELOCITY-(-MAX_VELOCITY)));
 	GLfloat yPos = -MAX_VELOCITY + (float)rand()/((float)RAND_MAX/(MAX_VELOCITY-(-MAX_VELOCITY)));
@@ -61,34 +63,56 @@ GLfloat Asteroid::getRadius(){
 	return this->radius;
 }
 
-glm::mat4 Asteroid::getTransformMatrix(float bounds){
-	this->position += velocityVector;
+bool Asteroid::isAlive(){
+	return alive;
+}
 
-	glm::mat4 T = glm::translate(this->translation, velocityVector);
-	this->translation = T;
-	if(this->position.x + radius >= bounds || this->position.x - radius <= -bounds){
-		velocityVector = glm::vec3(-velocityVector.x, velocityVector.y, velocityVector.z);
-		rotationRates = glm::vec3(rotationRates.x, -rotationRates.y, -rotationRates.z);
-	}
+void Asteroid::kill(){
+	this->alive = false;
+}
 
-	if(this->position.y + radius >= bounds || this->position.y - radius <= -bounds){
-		velocityVector = glm::vec3(velocityVector.x, -velocityVector.y, velocityVector.z);
-		rotationRates = glm::vec3(-rotationRates.x, rotationRates.y, -rotationRates.z);
-	}
+float Asteroid::getID(){
+	return this->asteroidID;
+}
 
-	if(this->position.z + radius>= bounds || this->position.z - radius<= -bounds){
-		velocityVector = glm::vec3(velocityVector.x, velocityVector.y, -velocityVector.z);
-		rotationRates = glm::vec3(-rotationRates.x, -rotationRates.y, rotationRates.z);
-	}
+void Asteroid::setStartingPoint(glm::vec3 startingPosition){
+	this->position = startingPosition;
+	glm::vec3 translateVector = this->position;
+	this->translation = glm::translate(glm::mat4(1), translateVector);
+}
 
-	glm::mat4 R = glm::rotate(this->rotation, rotationRates.x, glm::vec3(1,0,0));
-	R = glm::rotate(R, rotationRates.y, glm::vec3(0,1,0));
-	R = glm::rotate(R, rotationRates.z, glm::vec3(0,0,1));
-	this->rotation = R;
-
+glm::mat4 Asteroid::getTransformMatrix(float bounds, bool pickingPass){
 	glm::mat4 S = glm::scale(glm::mat4(1), glm::vec3(radius / deformedResultantRadius, radius / deformedResultantRadius, radius / deformedResultantRadius));
 
-	return T*R*S;
+	if(!pickingPass){
+		this->position += velocityVector;
+		
+		glm::mat4 T = glm::translate(this->translation, velocityVector);
+		this->translation = T;
+		if(this->position.x + radius >= bounds || this->position.x - radius <= -bounds){
+			velocityVector = glm::vec3(-velocityVector.x, velocityVector.y, velocityVector.z);
+			rotationRates = glm::vec3(rotationRates.x, -rotationRates.y, -rotationRates.z);
+		}
+
+		if(this->position.y + radius >= bounds || this->position.y - radius <= -bounds){
+			velocityVector = glm::vec3(velocityVector.x, -velocityVector.y, velocityVector.z);
+			rotationRates = glm::vec3(-rotationRates.x, rotationRates.y, -rotationRates.z);
+		}
+
+		if(this->position.z + radius>= bounds || this->position.z - radius<= -bounds){
+			velocityVector = glm::vec3(velocityVector.x, velocityVector.y, -velocityVector.z);
+			rotationRates = glm::vec3(-rotationRates.x, -rotationRates.y, rotationRates.z);
+		}
+
+		glm::mat4 R = glm::rotate(this->rotation, rotationRates.x, glm::vec3(1,0,0));
+		R = glm::rotate(R, rotationRates.y, glm::vec3(0,1,0));
+		R = glm::rotate(R, rotationRates.z, glm::vec3(0,0,1));
+		this->rotation = R;
+
+		return T*R*S;
+	} else {
+		return this->translation * this->rotation * S;
+	}
 }
 
 void Asteroid::generateAsteroidBase(){

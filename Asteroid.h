@@ -13,15 +13,21 @@ public:
 	Asteroid(glm::vec3 startingPosition, int elementOffset, GLfloat radius);
 	~Asteroid(void);
 
-	glm::mat4 getTransformMatrix(float bounds);
+	glm::mat4 getTransformMatrix(float bounds, bool pickingPass);
 	glm::vec3 getPosition();
 	GLfloat getRadius();
+	bool isAlive();
+	void kill();
 	vector<GLfloat> getNormals();
 	vector<GLfloat> getVertices();
 	vector<GLuint> getElementArray();
 	vector<GLfloat> getColors();
+	float getID();
+	void setStartingPoint(glm::vec3 startingPosition);
 
 private:
+	static float nextID;
+
 	map<int64_t, int> middlePointCache;
 	vector<Point> asteroidPoints;
 	vector<Triangle> asteroidTriangles;
@@ -31,6 +37,10 @@ private:
 	vector<GLfloat> colors;
 
 	int elementOffset;
+
+	float asteroidID;
+
+	bool alive;
 
 	glm::vec3 position;
 	glm::mat4 rotation;

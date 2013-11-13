@@ -9,6 +9,11 @@ std::vector<glm::vec3> Cube::norms = vector<vec3>();
 std::vector<glm::vec3> Cube::colors = vector<vec3>();
 std::vector<GLuint> Cube::faces = vector<GLuint>();
 
+std::vector<GLfloat> Cube::vertices = vector<GLfloat>();
+std::vector<GLfloat> Cube::normals = vector<GLfloat>();
+std::vector<GLfloat> Cube::colorFloats = vector<GLfloat>();
+std::vector<GLuint> Cube::triangles = vector<GLuint>();
+
 Cube::Cube() {
 	transform = mat4(1);
 	Cube::genVerts();
@@ -80,6 +85,14 @@ void Cube::genVerts() {
 		Cube::verts.push_back(vec3(-1,-1,1));
 		Cube::verts.push_back(vec3(-1,-1,-1));
 	}
+	if(Cube::vertices.empty()){
+		for(int i = 0; i < Cube::verts.size(); i++){
+			glm::vec3 pos = Cube::verts.data()[i];
+			Cube::vertices.push_back(pos.x);
+			Cube::vertices.push_back(pos.y);
+			Cube::vertices.push_back(pos.z);
+		}
+	}
 }
 
 void Cube::genNorms() {
@@ -108,6 +121,15 @@ void Cube::genNorms() {
 		Cube::norms.push_back(-vec3(0,0,1));
 		Cube::norms.push_back(-vec3(0,0,1));
 		Cube::norms.push_back(-vec3(0,0,-1));
+	}
+
+	if(Cube::normals.empty()){
+		for(int i = 0; i < Cube::norms.size(); i++){
+			glm::vec3 n = Cube::norms.data()[i];
+			Cube::normals.push_back(n.x);
+			Cube::normals.push_back(n.y);
+			Cube::normals.push_back(n.z);
+		}
 	}
 }
 
@@ -156,6 +178,13 @@ void Cube::genFaces() {
 		Cube::faces.push_back(9);
 		Cube::faces.push_back(22);
 	}
+
+	if(Cube::triangles.empty()){
+		for(int i = 0; i < Cube::faces.size(); i++){
+			GLuint tri = Cube::faces.data()[i];
+			Cube::triangles.push_back(tri);
+		}
+	}
 }
 
 void Cube::genColors(){
@@ -202,5 +231,14 @@ void Cube::genColors(){
 		Cube::colors.push_back(orange);//21
 		Cube::colors.push_back(orange);//22
 		Cube::colors.push_back(grey); //23
+	}
+
+	if(Cube::colorFloats.empty()){
+		for(int i = 0; i < Cube::colors.size(); i++){
+			glm::vec3 col = Cube::colors.data()[i];
+			Cube::colorFloats.push_back(col.x);
+			Cube::colorFloats.push_back(col.y);
+			Cube::colorFloats.push_back(col.z);
+		}
 	}
 }
