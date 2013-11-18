@@ -11,8 +11,6 @@
 #include "ShaderManager.h"
 #include "GLHelper.h"
 #include "RenderEngine.h"
-#include "Maze.h"
-#include "MazeModel.h"
 
 #define RESOLUTION 800
 #define TARGET_FPS 30                // controls spin update rate
