@@ -12,7 +12,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "GLHelper.h"
-#include "MazeModel.h"
 #include "Asteroid.h"
 #include "src/Cube.hpp"
 using namespace glm;
@@ -154,7 +153,6 @@ public:
 
 
 private:
-	MazeModel model;
 	bool initialized;
 	Cube arena;
 	vector<Asteroid> asteroids;

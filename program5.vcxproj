@@ -112,7 +112,6 @@
     <ClCompile Include="program5.cpp" />
     <ClCompile Include="src\Cube.cpp" />
     <ClCompile Include="Triangle.cpp" />
-    <ClCompile Include="Wall.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asteroid.h" />
@@ -127,7 +126,6 @@
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="src\Cube.hpp" />
     <ClInclude Include="Triangle.h" />
-    <ClInclude Include="Wall.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
