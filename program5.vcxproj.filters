@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Glew">
+      <UniqueIdentifier>{ca344bf9-5d34-4007-876f-b711f93e5843}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\simple.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\simple.frag">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="glew\glew.c">
+      <Filter>Glew</Filter>
+    </ClCompile>
+    <ClCompile Include="program5.cpp" />
+    <ClCompile Include="Asteroid.cpp" />
+    <ClCompile Include="Point.cpp" />
+    <ClCompile Include="Triangle.cpp" />
+    <ClCompile Include="Wall.cpp" />
+    <ClCompile Include="src\Cube.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="glew\glew.h">
+      <Filter>Glew</Filter>
+    </ClInclude>
+    <ClInclude Include="glew\glxew.h">
+      <Filter>Glew</Filter>
+    </ClInclude>
+    <ClInclude Include="glew\wglew.h">
+      <Filter>Glew</Filter>
+    </ClInclude>
+    <ClInclude Include="GLHelper.h" />
+    <ClInclude Include="Maze.h" />
+    <ClInclude Include="MazeModel.h" />
+    <ClInclude Include="RenderEngine.h" />
+    <ClInclude Include="ShaderManager.h" />
+    <ClInclude Include="Asteroid.h" />
+    <ClInclude Include="Point.h" />
+    <ClInclude Include="Triangle.h" />
+    <ClInclude Include="Wall.h" />
+    <ClInclude Include="src\Cube.hpp" />
+  </ItemGroup>
+</Project>
