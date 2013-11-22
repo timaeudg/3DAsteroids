@@ -1,7 +1,7 @@
 #include "Asteroid.h"
 #define REFINEMENT_LEVEL 2
 #define BASE_RADIUS 1.9021f
-#define MAX_VELOCITY 0.05
+#define MAX_VELOCITY 0.01
 #define MAX_ROTATION 5.0
 
 float Asteroid::nextID = 1.0;

@@ -14,7 +14,8 @@
 #include "Maze.h"
 #include "MazeModel.h"
 
-#define RESOLUTION 800
+#define RESOLUTION_X 1280
+#define RESOLUTION_Y 720
 #define TARGET_FPS 30                // controls spin update rate
 #define TIME_WINDOW 3                // number of frames motion is valid after release
 
@@ -24,7 +25,7 @@ class Program4
 public:
 	Program4(unsigned int const & w, unsigned int const & h)
 	{
-		App = new sf::Window(sf::VideoMode(RESOLUTION, RESOLUTION, 32), "program5");
+		App = new sf::Window(sf::VideoMode(RESOLUTION_X, RESOLUTION_Y, 32), "program5", sf::Style::Fullscreen);
 		const sf::Input& input = App->GetInput();
 		render.init();
 		step = 2;
@@ -89,7 +90,7 @@ public:
 					render.display(camera, target, up, true);
 					if(firing == 5) {
 					float pickedColor[4];
-						glReadPixels(RESOLUTION/2, RESOLUTION/2, 1, 1, GL_RGBA, GL_FLOAT, pickedColor);
+						glReadPixels(RESOLUTION_X/2, RESOLUTION_Y/2, 1, 1, GL_RGBA, GL_FLOAT, pickedColor);
 						float roundedID = floor(pickedColor[0]*255 + .5);
 						printf("Picked ID: %f\n", roundedID);
 						render.splitNextAsteroid(roundedID);

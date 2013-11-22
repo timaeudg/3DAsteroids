@@ -62,7 +62,7 @@ public:
 
 		mat4 C = mat4(1);
 		C = glm::lookAt(camera, target,up);
-		P = perspective(90.f, 1.f, 0.1f, 200.f);
+		P = perspective(90.f, 16.0f/9.0f, 0.1f, 200.f);
 
 		glUniformMatrix4fv(cameraSlot, 1, GL_FALSE, &C[0][0]);
 		glUniformMatrix4fv(perspectiveSlot, 1, GL_FALSE, &P[0][0]);
